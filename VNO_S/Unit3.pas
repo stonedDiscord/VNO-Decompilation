@@ -180,32 +180,38 @@ end;
 
 procedure TForm3.Button10Click(Sender: TObject);
 begin
-;
+  TRefresh();
+  Memo4.Lines.LoadFromFile('musiclist.txt');
+  Memo4.BringToFront;
+  Button10.Caption := 'OTHER';
 end;
 
 procedure TForm3.Button11Click(Sender: TObject);
 begin
-      ;
+  Memo3.BringToFront;
+  Button11.Caption := 'AREAS';
 end;
 
 procedure TForm3.Button12Click(Sender: TObject);
 begin
-     ;
+  Memo1.BringToFront;
+  Button12.Caption := 'HOST';
 end;
 
 procedure TForm3.Button13Click(Sender: TObject);
 begin
-     ;
+  Memo3.BringToFront;
+  Button13.Caption := 'ITEMS';
 end;
 
 procedure TForm3.Button14Click(Sender: TObject);
 begin
-     ;
+  InputBox('Banning a Player', 'Enter the username to ban:', '');
 end;
 
 procedure TForm3.Button15Click(Sender: TObject);
 begin
-     ;
+  InputBox('Banning a Player', 'Enter the IP to ban:', '');
 end;
 
 procedure TForm3.Button16Click(Sender: TObject);
@@ -223,7 +229,9 @@ end;
 
 procedure TForm3.Button18Click(Sender: TObject);
 begin
-     ;
+  Memo1.Lines.SaveToFile('host.txt');
+  Memo3.Lines.SaveToFile('areas.txt');
+  Memo4.Lines.SaveToFile('musiclist.txt');
 end;
 
 procedure TForm3.Button19Click(Sender: TObject);
@@ -238,22 +246,25 @@ end;
 
 procedure TForm3.Button20Click(Sender: TObject);
 begin
-     ;
+  TRefresh();
 end;
 
 procedure TForm3.Button21Click(Sender: TObject);
 begin
-     ;
+  if not ClientSocket1.Active then
+    Button19Click(Self);
 end;
 
 procedure TForm3.Button22Click(Sender: TObject);
 begin
-     ;
+  listbox_event.BringToFront;
+  Button22.Caption := 'MODS';
 end;
 
 procedure TForm3.Button23Click(Sender: TObject);
 begin
-     ;
+  Memo1.BringToFront;
+  Button23.Caption := 'ANIMATORS';
 end;
 
 procedure TForm3.Button2Click(Sender: TObject);
@@ -289,12 +300,14 @@ end;
 
 procedure TForm3.Button8Click(Sender: TObject);
 begin
-     ;
+  groupbox1.BringToFront;
+  Button8.Caption := 'SETTINGS';
 end;
 
 procedure TForm3.Button9Click(Sender: TObject);
 begin
-     ;
+  Loader();
+  Button9.Caption := 'INIT';
 end;
 
 procedure TForm3.button_reloadClick(Sender: TObject);
