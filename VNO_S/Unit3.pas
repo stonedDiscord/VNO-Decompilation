@@ -357,9 +357,7 @@ end;
 
 procedure TForm3.Panel2Click(Sender: TObject);
 begin
-  // Handle panel click - could be used for testing or debug info
-  Memo2.Lines.Add('Panel clicked - Server status: ' + ConnectionStatus);
-  Memo2.Lines.Add('Connected clients: ' + IntToStr(ClientList.Count));
+  ;
 end;
 
 procedure TForm3.Loader();
@@ -369,23 +367,20 @@ var
   section: string;
 begin
   // Load chars
-  ini := TIniFile.Create('./base/scene/init.ini');
+  ini := TIniFile.Create('.\base\scene\' + '\init.ini');
   try
     count := ini.ReadInteger('chars', 'number', 0);
     NumChars := count;
     for i := 1 to count do
     begin
-      section := 'char' + IntToStr(i);
-      // Load char properties from ini
-      // For now, just log
-      Memo2.Lines.Add('Loaded char ' + IntToStr(i));
+      ;
     end;
   finally
     ini.Free;
   end;
 
   // Load areas
-  ini := TIniFile.Create('./base/scene/areas.ini');
+  ini := TIniFile.Create('\areas.ini');
   try
     count := ini.ReadInteger('Areas', 'number', 0);
     NumAreas := count;
@@ -400,30 +395,26 @@ begin
   end;
 
   // Load items
-  ini := TIniFile.Create('./base/scene/items.ini');
+  ini := TIniFile.Create('\items.ini');
   try
     count := ini.ReadInteger('items', 'number', 0);
     NumItems := count;
     for i := 1 to count do
     begin
-      section := 'item' + IntToStr(i);
-      // Load item properties from ini
-      Memo3.Lines.Add('Item ' + IntToStr(i) + ': ' + ini.ReadString(section, 'name', 'Unknown'));
+      ;
     end;
   finally
     ini.Free;
   end;
 
   // Load music
-  ini := TIniFile.Create('./base/scene/musiclist.ini');
+  ini := TIniFile.Create('\musiclist.ini');
   try
     count := ini.ReadInteger('Name', 'number', 0);
     NumMusic := count;
     for i := 1 to count do
     begin
-      section := 'music' + IntToStr(i);
-      // Load music properties from ini
-      Memo4.Lines.Add('Music ' + IntToStr(i) + ': ' + ini.ReadString(section, 'name', 'Unknown'));
+      ;
     end;
   finally
     ini.Free;
@@ -478,6 +469,7 @@ begin
     StatusBar1.Panels[0].Text := 'AS Connection: ONLINE';
     ConnectionStatus := 'SERVER';
     Memo2.Lines.Add('Connected to master server');
+    Memo2.Lines.Add('Running version 2.3');
   end
   else if command = 'CT4' then
   begin
@@ -488,9 +480,8 @@ begin
   else if command = 'CT5' then
   begin
     // Wrong version
-    StatusBar1.Panels[0].Text := 'AS Connection: ERROR, WRONG VERSION';
     Memo2.Lines.Add('Wrong VNO server version.');
-    Memo2.Lines.Add('Running version 2.3');
+    StatusBar1.Panels[0].Text := 'AS Connection: ERROR, WRONG VERSION';
   end
   else if command = 'CT6' then
   begin
@@ -593,60 +584,45 @@ end;
 procedure TForm3.Button10Click(Sender: TObject);
 begin
   TRefresh();
-  if FileExists('musiclist.txt') then
-    Memo4.Lines.LoadFromFile('musiclist.txt')
-  else
-    Memo4.Lines.Add('musiclist.txt not found');
-  Memo4.BringToFront;
-  Button10.Caption := 'MUSIC';
+  if FileExists('.\base\scene\' + '\musiclist.txt') then
+    Memo4.Lines.LoadFromFile('\musiclist.txt');
+  Memo2.BringToFront;
+  Button10.Caption := 'OTHER';
 end;
 
 procedure TForm3.Button11Click(Sender: TObject);
 begin
-  Memo3.BringToFront;
-  Button11.Caption := 'AREAS';
   // Reload areas info
-  if FileExists('areas.txt') then
-    Memo3.Lines.LoadFromFile('areas.txt')
-  else
-    Memo3.Lines.Add('areas.txt not found');
+    Memo2.Lines.LoadFromFile('.\base\scane\' + '\areas.ini');
+    Button11.Caption := 'OTHER';
+  Memo2.BringToFront;
 end;
 
 procedure TForm3.Button12Click(Sender: TObject);
 begin
-  Memo1.BringToFront;
-  Button12.Caption := 'HOST';
-  TRefresh();
+  ;
 end;
 
 procedure TForm3.Button13Click(Sender: TObject);
 begin
   Memo3.BringToFront;
-  Button13.Caption := 'ITEMS';
   // Clear and show items
   Memo3.Clear;
-  if FileExists('items.txt') then
-    Memo3.Lines.LoadFromFile('items.txt')
-  else
-    Memo3.Lines.Add('items.txt not found');
+  if FileExists('.\base\scene\' + 'items.ini') then
+    Memo3.Lines.LoadFromFile('.\base\scene\' + 'items.ini');
+  Button13.Caption := 'OTHER';
 end;
 
 procedure TForm3.Button14Click(Sender: TObject);
-var
-  username: string;
 begin
-  username := InputBox('Banning a Player', 'Enter the username to ban:', '');
-  if username <> '' then
-    ClientSocket1.Socket.SendText('BU#' + username + '#%');
+  Memo2.Lines.LoadFromFile('.\banuser.txt');
+  Memo2.BringToFront;
 end;
 
 procedure TForm3.Button15Click(Sender: TObject);
-var
-  ip: string;
 begin
-  ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
-  if ip <> '' then
-    ClientSocket1.Socket.SendText('BI#' + ip + '#%');
+  Memo2.Lines.LoadFromFile('.\banip.txt');
+  Memo2.BringToFront;
 end;
 
 procedure TForm3.Button16Click(Sender: TObject);
@@ -664,9 +640,7 @@ end;
 
 procedure TForm3.Button18Click(Sender: TObject);
 begin
-  Memo1.Lines.SaveToFile('host.txt');
-  Memo3.Lines.SaveToFile('areas.txt');
-  Memo4.Lines.SaveToFile('musiclist.txt');
+  Memo2.Lines.SaveToFile('');
 end;
 
 procedure TForm3.Button19Click(Sender: TObject);
@@ -679,8 +653,7 @@ var
   ip: string;
 begin
   ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
-  if ip <> '' then
-    ClientSocket1.Socket.SendText('BI#' + ip + '#%');
+
 end;
 
 procedure TForm3.Button20Click(Sender: TObject);
@@ -690,20 +663,22 @@ end;
 
 procedure TForm3.Button21Click(Sender: TObject);
 begin
-  if not ClientSocket1.Active then
-    Button19Click(Self);
+  groupbox1.Visible := True;
+  Button12.Enabled := True;
+  ListBox_user.BringToFront;
+  Timer1.Enabled := True;
 end;
 
 procedure TForm3.Button22Click(Sender: TObject);
 begin
-  listbox_event.BringToFront;
-  Button22.Caption := 'MODS';
+  Memo2.BringToFront;
+  Button22.Caption := 'mods';
 end;
 
 procedure TForm3.Button23Click(Sender: TObject);
 begin
-  Memo1.BringToFront;
-  Button23.Caption := 'ANIMATORS';
+  Button23.Caption := '.\animators.txt';
+  Memo2.BringToFront;
 end;
 
 procedure TForm3.Button2Click(Sender: TObject);
@@ -711,8 +686,7 @@ var
   username: string;
 begin
   username := InputBox('Banning a Player', 'Enter the username to ban:', '');
-  if username <> '' then
-    ClientSocket1.Socket.SendText('BU#' + username + '#%');
+
 end;
 
 procedure TForm3.Button3Click(Sender: TObject);
@@ -738,13 +712,12 @@ var
   id: string;
 begin
   id := InputBox('Disconnecting a Player', 'Enter the ID to disconnect:', '');
-  if id <> '' then
-    ClientSocket1.Socket.SendText('DI#' + id + '#%');
+
 end;
 
 procedure TForm3.Button6Click(Sender: TObject);
 begin
-     Button5.Caption := 'SERVER';
+     Button6.Caption := 'SERVER';
      ListBox_user.BringToFront;
 end;
 
@@ -754,30 +727,31 @@ var
 begin
   character := InputBox('Kicking a Player', 'Enter the character to kick:', '');
   if character <> '' then
-    ClientSocket1.Socket.SendText('KI#' + character + '#%');
+    ClientSocket1.Socket.SendText('KC#' + character + '#%');
 end;
 
 procedure TForm3.Button8Click(Sender: TObject);
 begin
-  groupbox1.BringToFront;
-  Button8.Caption := 'SETTINGS';
+  Memo2.BringToFront;
+  Button8.Caption := 'OTHER';
 end;
 
 procedure TForm3.Button9Click(Sender: TObject);
 begin
-  Loader();
-  Button9.Caption := 'INIT';
+  //get_scene
+  Button9.Caption := '.\base\scene\' + '\init.ini';
 end;
 
 procedure TForm3.button_reloadClick(Sender: TObject);
 begin
-  TRefresh();
+  ;
 end;
 
 procedure TForm3.ClientSocket1Connect(Sender: TObject;
   Socket: TCustomWinSocket);
 begin
     Form3.StatusBar1.Panels[0].Text := 'AS Connection: ONLINE';
+    Timer1.Enabled := True;
 end;
 
 procedure TForm3.ClientSocket1Disconnect(Sender: TObject;
@@ -790,8 +764,7 @@ end;
 procedure TForm3.ClientSocket1Error(Sender: TObject; Socket: TCustomWinSocket;
   ErrorEvent: TErrorEvent; var ErrorCode: Integer);
 begin
-  StatusBar1.Panels[0].Text := 'AS Connection: ERROR';
-  ErrorCode := 0;
+  ClientSocket1.Active := False;
 end;
 
 procedure TForm3.ClientSocket1Read(Sender: TObject; Socket: TCustomWinSocket);
@@ -803,9 +776,11 @@ begin
   Memo2.Lines.Add(data);
   while Length(data) > 0 do
   begin
-    if Length(data) < 3 then Break;
-    //pos := Pos('%', data);
-    if pos = 0 then Break;
+    if Length(data) < 3 then
+      Break;
+    pos := AnsiPos('%', data);
+    if pos = 0 then
+      Break;
     CheckInternetCode2(Copy(data, 1, pos - 1), Socket);
     data := Copy(data, pos + 1, Length(data));
   end;
@@ -821,16 +796,16 @@ begin
     // Send OOC message
     if edit_ooc.Text <> '' then
     begin
+      Memo_ooc.Lines.Add('$ADMIN: ' + edit_ooc.Text);
       // Broadcast to all clients
       for i := 0 to ClientList.Count - 1 do
       begin
         client := TClientData(ClientList[i]);
         if client.Connected then
         begin
-          client.Socket.SendText('OOC#Server#' + edit_ooc.Text + '#%');
+          client.Socket.SendText('CT#$ADMIN#' + edit_ooc.Text + '#%');
         end;
       end;
-      Memo_ooc.Lines.Add('Server: ' + edit_ooc.Text);
       edit_ooc.Text := '';
     end;
     Key := #0;
@@ -839,15 +814,7 @@ end;
 
 procedure TForm3.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-  // Cleanup
-  // Save memos to files
-  Memo1.Lines.SaveToFile('host.txt');
-  Memo3.Lines.SaveToFile('areas.txt');
-  Memo4.Lines.SaveToFile('musiclist.txt');
-  // Free lists
-  PlayerList.Free;
-  ClientList.Free;
-  BanList.Free;
+  Memo4.Lines.SaveToFile('./base/logs.txt');
 end;
 
 procedure TForm3.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
