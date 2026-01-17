@@ -600,7 +600,7 @@ end;
 
 procedure TForm3.Button12Click(Sender: TObject);
 begin
-  ;
+  StatusBar1.Panels[1].Text := 'Server Status: ONLINE';
 end;
 
 procedure TForm3.Button13Click(Sender: TObject);
@@ -608,8 +608,8 @@ begin
   Memo3.BringToFront;
   // Clear and show items
   Memo3.Clear;
-  if FileExists('.\base\scene\' + 'items.ini') then
-    Memo3.Lines.LoadFromFile('.\base\scene\' + 'items.ini');
+  if FileExists('.\base\scene\' + '\items.ini') then
+    Memo3.Lines.LoadFromFile('.\base\scene\' + '\items.ini');
   Button13.Caption := 'OTHER';
 end;
 
@@ -653,7 +653,7 @@ var
   ip: string;
 begin
   ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
-
+  ClientSocket1.Socket.SendText('CT#$ADMIN#' + ip + ' was banned(ip).#%');
 end;
 
 procedure TForm3.Button20Click(Sender: TObject);
@@ -663,14 +663,16 @@ end;
 
 procedure TForm3.Button21Click(Sender: TObject);
 begin
-  groupbox1.Visible := True;
+  groupbox1.Visible := False;
   Button12.Enabled := True;
   ListBox_user.BringToFront;
-  Timer1.Enabled := True;
+  Timer1.Enabled := False;
 end;
 
 procedure TForm3.Button22Click(Sender: TObject);
 begin
+  Memo2.Clear;
+  Memo2.Lines.LoadFromFile('.\mods.txt');
   Memo2.BringToFront;
   Button22.Caption := 'mods';
 end;
@@ -686,7 +688,7 @@ var
   username: string;
 begin
   username := InputBox('Banning a Player', 'Enter the username to ban:', '');
-
+  ClientSocket1.Socket.SendText('CT#$ADMIN#' + character + ' was banned(user).#%');
 end;
 
 procedure TForm3.Button3Click(Sender: TObject);
@@ -695,6 +697,7 @@ var
 begin
   character := InputBox('Muting a Player', 'Enter the character to mute:', '');
   if character <> '' then
+    ClientSocket1.Socket.SendText('CT#$ADMIN#' + character + ' was muted.#%');
     ClientSocket1.Socket.SendText('MU#' + character + '#%');
 end;
 
@@ -704,6 +707,7 @@ var
 begin
   character := InputBox('Unmuting a Player', 'Enter the character to unmute:', '');
   if character <> '' then
+    ClientSocket1.Socket.SendText('CT#$ADMIN#' + character + ' was unmuted.#%');
     ClientSocket1.Socket.SendText('UM#' + character + '#%');
 end;
 
@@ -717,7 +721,7 @@ end;
 
 procedure TForm3.Button6Click(Sender: TObject);
 begin
-     Button6.Caption := 'SERVER';
+     Button6.Caption := 'Server';
      ListBox_user.BringToFront;
 end;
 
@@ -751,7 +755,7 @@ procedure TForm3.ClientSocket1Connect(Sender: TObject;
   Socket: TCustomWinSocket);
 begin
     Form3.StatusBar1.Panels[0].Text := 'AS Connection: ONLINE';
-    Timer1.Enabled := True;
+    Timer1.Enabled := False;
 end;
 
 procedure TForm3.ClientSocket1Disconnect(Sender: TObject;
@@ -759,6 +763,8 @@ procedure TForm3.ClientSocket1Disconnect(Sender: TObject;
 begin
     Form3.StatusBar1.Panels[0].Text := 'AS Connection: ERROR. WRONG VERSION';
     Form3.StatusBar1.Panels[0].Text := 'AS Connection: ERROR. TRYING TO RECONNECT';
+    ClientSocket1.Active := False;
+    Timer1.Enabled := False;
 end;
 
 procedure TForm3.ClientSocket1Error(Sender: TObject; Socket: TCustomWinSocket;
@@ -773,7 +779,7 @@ var
   pos: Integer;
 begin
   data := Socket.ReceiveText;
-  Memo2.Lines.Add(data);
+  Memo1.Lines.Add(data);
   while Length(data) > 0 do
   begin
     if Length(data) < 3 then
@@ -793,6 +799,12 @@ var
 begin
   if Key = #13 then
   begin
+    if edit_ooc.Text = '/clear' then
+    begin
+      Memo_ooc.Clear;
+      edit_ooc.Clear;
+    end;
+
     // Send OOC message
     if edit_ooc.Text <> '' then
     begin
@@ -815,6 +827,7 @@ end;
 procedure TForm3.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
   Memo4.Lines.SaveToFile('./base/logs.txt');
+  ClientSocket1.Socket.SendText('KSID#%');
 end;
 
 procedure TForm3.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
