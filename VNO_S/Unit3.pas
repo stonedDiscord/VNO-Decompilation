@@ -3,11 +3,19 @@ unit Unit3;
 interface
 
 uses
-  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Win.ScktComp,
-  IdBaseComponent, IdGlobal, IdHash, IdHashMessageDigest, IdSASL, IdSASLUserPass, IdSASLDigest, Vcl.ComCtrls;
+   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, System.Win.ScktComp,
+   IdBaseComponent, IdGlobal, IdHash, IdHashMessageDigest, IdSASL, IdSASLUserPass, IdSASLDigest, Vcl.ComCtrls, IniFiles;
 
 type
+  TPlayer = record
+    ID: Integer;
+    Name: string;
+    IP: string;
+    Character: string;
+    Status: string;
+  end;
+
   TForm3 = class(TForm)
     edit_ooc: TEdit;
     Memo2: TMemo;
@@ -107,6 +115,8 @@ type
 
 var
   Form3: TForm3;
+  PlayerList: TList;
+  ConnectionStatus: string;
 
 implementation
 
@@ -114,7 +124,8 @@ implementation
 
 procedure TForm3.Timer1Timer(Sender: TObject);
 begin
-;
+  ClientSocket1.Active := False;
+  ClientSocket1.Active := True;
 end;
 
 procedure TForm3.TimerPerRoomTimer(Sender: TObject);
@@ -123,8 +134,18 @@ begin
 end;
 
 procedure TForm3.TRefresh();
+var
+  i: Integer;
+  player: ^TPlayer;
 begin
-;
+  Memo1.Lines.Clear;
+  for i := 0 to PlayerList.Count - 1 do
+  begin
+    player := PlayerList[i];
+    Memo1.Lines.Add(IntToStr(player^.ID) + ' ' + player^.Name + ' ' + player^.IP + ' ' + player^.Character + ' ' + player^.Status);
+  end;
+  if ConnectionStatus <> 'ac ' then
+    StatusBar1.Panels[0].Text := 'ac<';
 end;
 
 function TForm3.MD5(S: String): string;
@@ -154,8 +175,11 @@ end;
 
 procedure TForm3.ServerSocket1ClientRead(Sender: TObject;
   Socket: TCustomWinSocket);
+var
+  data: string;
 begin
-;
+  data := Socket.ReceiveText;
+  CheckInternetCode(data, Socket);
 end;
 
 procedure TForm3.Panel2Click(Sender: TObject);
@@ -164,18 +188,107 @@ begin
 end;
 
 procedure TForm3.Loader();
+var
+  ini: TIniFile;
+  i, count: Integer;
 begin
-;
+  // Load chars
+  ini := TIniFile.Create('./base/scene/init.ini');
+  try
+    count := ini.ReadInteger('chars', 'number', 0);
+    // Create CharData objects
+    for i := 1 to count do
+    begin
+      // Load char i
+    end;
+  finally
+    ini.Free;
+  end;
+
+  // Load areas
+  ini := TIniFile.Create('./base/scene/areas.ini');
+  try
+    count := ini.ReadInteger('Areas', 'number', 0);
+    // Create RoomData objects
+  finally
+    ini.Free;
+  end;
+
+  // Load items
+  ini := TIniFile.Create('./base/scene/items.ini');
+  try
+    count := ini.ReadInteger('items', 'number', 0);
+    // Create ItemData objects
+  finally
+    ini.Free;
+  end;
+
+  // Load music
+  ini := TIniFile.Create('./base/scene/musiclist.ini');
+  try
+    count := ini.ReadInteger('Name', 'number', 0);
+    // Create MusicData objects
+  finally
+    ini.Free;
+  end;
 end;
 
 procedure TForm3.CheckInternetCode2(s: string; Socket: TCustomWinSocket);
+var
+  parts: TArray<string>;
+  command: string;
 begin
-;
+  parts := s.Split(['#']);
+  if Length(parts) > 0 then
+    command := parts[0]
+  else
+    Exit;
+
+  if command = 'CT' then
+  begin
+    // Handle player update
+    // Update player name, refresh list
+    TRefresh();
+  end
+  else if command = 'VER' then
+  begin
+    // Send version
+    ClientSocket1.Socket.SendText('VER#S#2.3#%');
+  end
+  else if command = 'CT2' then
+  begin
+    // Send login
+    ClientSocket1.Socket.SendText('CO#' + Edit1.Text + '#' + MD5(Edit2.Text) + '#%');
+  end
+  else if command = 'CT3' then
+  begin
+    // Connection success
+    StatusBar1.Panels[0].Text := 'AS Connection: ONLINE';
+    ConnectionStatus := 'SERVER';
+  end
+  else if command = 'CT4' then
+  begin
+    // Refused
+    Memo2.Lines.Add('Refused access to masterserver.');
+  end
+  else if command = 'CT5' then
+  begin
+    // Wrong version
+    StatusBar1.Panels[0].Text := 'AS Connection: ERROR, WRONG VERSION';
+    Memo2.Lines.Add('Wrong VNO server version.');
+    Memo2.Lines.Add('Running version 2.3');
+  end
+  else if command = 'CT6' then
+  begin
+    // Ban IP
+    // Close connections from IP
+  end;
 end;
 
 procedure TForm3.CheckInternetCode(s: string; Socket: TCustomWinSocket);
 begin
-;
+  // Handle server client messages
+  // Parse commands like player actions, chat, etc.
 end;
 
 procedure TForm3.Button10Click(Sender: TObject);
@@ -352,8 +465,20 @@ begin
 end;
 
 procedure TForm3.ClientSocket1Read(Sender: TObject; Socket: TCustomWinSocket);
+var
+  data: string;
+  pos: Integer;
 begin
-       ;
+  data := Socket.ReceiveText;
+  Memo2.Lines.Add(data);
+  while Length(data) > 0 do
+  begin
+    if Length(data) < 3 then Break;
+    pos := Pos('%', data);
+    if pos = 0 then Break;
+    CheckInternetCode2(Copy(data, 1, pos - 1), Socket);
+    data := Copy(data, pos + 1, Length(data));
+  end;
 end;
 
 procedure TForm3.edit_oocKeyPress(Sender: TObject; var Key: Char);
