@@ -76,6 +76,7 @@ type
     procedure TimerPerRoomTimer(Sender: TObject);
     procedure TRefresh();
     function MD5(S: String): string;
+    function CheckForFreeSlot: Integer;
     procedure ServerSocket1ClientConnect(Sender: TObject;
       Socket: TCustomWinSocket);
     procedure ServerSocket1ClientDisconnect(Sender: TObject;
@@ -122,8 +123,6 @@ type
       ErrorEvent: TErrorEvent; var ErrorCode: Integer);
   private
     { Private-Deklarationen }
-    function IsBanned(ip: string): Boolean;
-    function GetFreeSlot: Integer;
     function FindClientBySocket(Socket: TCustomWinSocket): TClientData;
   public
     { Public-Deklarationen }
@@ -141,6 +140,10 @@ var
   NumMusic: Integer;
   NumChars: Integer;
 
+implementation
+
+{$R *.dfm}
+
 constructor TClientData.Create;
 begin
   inherited;
@@ -152,20 +155,8 @@ begin
   MemoryStream := TMemoryStream.Create;
 end;
 
-function TForm3.IsBanned(ip: string): Boolean;
-var
-  i: Integer;
-begin
-  Result := False;
-  for i := 0 to BanList.Count - 1 do
-    if BanList[i] = ip then
-    begin
-      Result := True;
-      Exit;
-    end;
-end;
 
-function TForm3.GetFreeSlot: Integer;
+function TForm3.CheckForFreeSlot: Integer;
 var
   i, j: Integer;
   used: Boolean;
@@ -200,10 +191,6 @@ begin
     end;
   Result := nil;
 end;
-
-implementation
-
-{$R *.dfm}
 
 procedure TForm3.Timer1Timer(Sender: TObject);
 begin
@@ -265,11 +252,12 @@ var
   countsMsg: string;
 begin
   ip := Socket.RemoteAddress;
-  if IsBanned(ip) then
-  begin
-    Socket.Close;
-    Exit;
-  end;
+
+//  if IsBanned(ip) then
+//  begin
+//    Socket.Close;
+//    Exit;
+//  end;
 
   // Send HPOFF if needed
   if not HPOffSent then
@@ -290,7 +278,7 @@ begin
   // Create client
   client := TClientData.Create;
   client.IP := ip;
-  client.ID := GetFreeSlot;
+  client.ID := CheckForFreeSlot;
   client.Socket := Socket;
   ClientList.Add(client);
 
@@ -510,7 +498,7 @@ begin
     if Length(parts) > 1 then
     begin
       ipToBan := parts[1];
-      BanList.Add(ipToBan);
+      //BanList.Add(ipToBan);
       // Close connections from this IP
       for i := 0 to ClientList.Count - 1 do
       begin
@@ -644,15 +632,19 @@ begin
 end;
 
 procedure TForm3.Button14Click(Sender: TObject);
+var
+  username: string;
 begin
-  var username := InputBox('Banning a Player', 'Enter the username to ban:', '');
+  username := InputBox('Banning a Player', 'Enter the username to ban:', '');
   if username <> '' then
     ClientSocket1.Socket.SendText('BU#' + username + '#%');
 end;
 
 procedure TForm3.Button15Click(Sender: TObject);
+var
+  ip: string;
 begin
-  var ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
+  ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
   if ip <> '' then
     ClientSocket1.Socket.SendText('BI#' + ip + '#%');
 end;
@@ -683,8 +675,10 @@ begin
 end;
 
 procedure TForm3.Button1Click(Sender: TObject);
+var
+  ip: string;
 begin
-  var ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
+  ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
   if ip <> '' then
     ClientSocket1.Socket.SendText('BI#' + ip + '#%');
 end;
@@ -713,29 +707,37 @@ begin
 end;
 
 procedure TForm3.Button2Click(Sender: TObject);
+var
+  username: string;
 begin
-  var username := InputBox('Banning a Player', 'Enter the username to ban:', '');
+  username := InputBox('Banning a Player', 'Enter the username to ban:', '');
   if username <> '' then
     ClientSocket1.Socket.SendText('BU#' + username + '#%');
 end;
 
 procedure TForm3.Button3Click(Sender: TObject);
+var
+  character: string;
 begin
-  var character := InputBox('Muting a Player', 'Enter the character to mute:', '');
+  character := InputBox('Muting a Player', 'Enter the character to mute:', '');
   if character <> '' then
     ClientSocket1.Socket.SendText('MU#' + character + '#%');
 end;
 
 procedure TForm3.Button4Click(Sender: TObject);
+var
+  character: string;
 begin
-  var character := InputBox('Unmuting a Player', 'Enter the character to unmute:', '');
+  character := InputBox('Unmuting a Player', 'Enter the character to unmute:', '');
   if character <> '' then
     ClientSocket1.Socket.SendText('UM#' + character + '#%');
 end;
 
 procedure TForm3.Button5Click(Sender: TObject);
+var
+  id: string;
 begin
-  var id := InputBox('Disconnecting a Player', 'Enter the ID to disconnect:', '');
+  id := InputBox('Disconnecting a Player', 'Enter the ID to disconnect:', '');
   if id <> '' then
     ClientSocket1.Socket.SendText('DI#' + id + '#%');
 end;
@@ -747,8 +749,10 @@ begin
 end;
 
 procedure TForm3.Button7Click(Sender: TObject);
+var
+  character: string;
 begin
-  var character := InputBox('Kicking a Player', 'Enter the character to kick:', '');
+  character := InputBox('Kicking a Player', 'Enter the character to kick:', '');
   if character <> '' then
     ClientSocket1.Socket.SendText('KI#' + character + '#%');
 end;
@@ -800,7 +804,7 @@ begin
   while Length(data) > 0 do
   begin
     if Length(data) < 3 then Break;
-    pos := Pos('%', data);
+    //pos := Pos('%', data);
     if pos = 0 then Break;
     CheckInternetCode2(Copy(data, 1, pos - 1), Socket);
     data := Copy(data, pos + 1, Length(data));
