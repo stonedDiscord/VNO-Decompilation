@@ -25,6 +25,7 @@ type
     IP: string;
     Connected: Boolean;
     Socket: TCustomWinSocket;
+    MemoryStream: TMemoryStream;
     constructor Create;
   end;
 
@@ -134,6 +135,11 @@ var
   ConnectionStatus: string;
   BanList: TList;
   ClientList: TList;
+  HPOffSent: Boolean;
+  NumAreas: Integer;
+  NumItems: Integer;
+  NumMusic: Integer;
+  NumChars: Integer;
 
 constructor TClientData.Create;
 begin
@@ -143,6 +149,7 @@ begin
   Room := -1;
   Character := '$UNOWN';
   Connected := True;
+  MemoryStream := TMemoryStream.Create;
 end;
 
 function TForm3.IsBanned(ip: string): Boolean;
@@ -242,6 +249,7 @@ procedure TForm3.ServerSocket1ClientConnect(Sender: TObject;
 var
   ip: string;
   client: TClientData;
+  countsMsg: string;
 begin
   ip := Socket.RemoteAddress;
   if IsBanned(ip) then
@@ -251,10 +259,20 @@ begin
   end;
 
   // Send HPOFF if needed
-  // Assume some condition
+  if not HPOffSent then
+  begin
+    Socket.SendText('HPOFF#%');
+    Sleep(10);
+    HPOffSent := True;
+  end;
 
   // Send counts message
-  // Assume send to socket
+  countsMsg := IntToStr(ClientList.Capacity) + '#' +
+               IntToStr(NumAreas) + '#' +
+               IntToStr(NumItems) + '#' +
+               IntToStr(NumMusic) + '#' +
+               IntToStr(NumChars) + '#%';
+  Socket.SendText(countsMsg);
 
   // Create client
   client := TClientData.Create;
@@ -267,7 +285,7 @@ begin
   Memo1.Lines.Add('[CONNEC.] ' + IntToStr(client.ID) + ' ' + ip);
 
   // Send to master server
-  // Assume send message
+  ClientSocket1.Socket.SendText(IntToStr(client.ID) + '#' + ip + '#%');
 
   // Refresh
   TRefresh();
@@ -278,6 +296,8 @@ procedure TForm3.ServerSocket1ClientDisconnect(Sender: TObject;
 var
   i: Integer;
   client: TClientData;
+  room: Integer;
+  count: Integer;
 begin
   for i := 0 to ClientList.Count - 1 do
   begin
@@ -285,14 +305,22 @@ begin
     if client.Socket = Socket then
     begin
       // Free memory stream if any
+      if client.MemoryStream <> nil then
+        client.MemoryStream.Free;
       // Set char taken to 0 if not $UNOWN
       if client.Name <> '$UNOWN' then
       begin
-        // Set taken to 0
+        // CharData[client.Character].taken := 0;
       end;
       // Decrement room count if in room
+      if client.Room <> -1 then
+      begin
+        // RoomData[client.Room].count := RoomData[client.Room].count - 1;
+      end;
       // Log disconnect
       Memo1.Lines.Add('[DISCONN.] ' + IntToStr(client.ID) + ' ' + client.IP);
+      // Clear slot
+      // ClientSlots[client.ID] := nil;
       // Remove from list
       ClientList.Delete(i);
       client.Free;
@@ -301,6 +329,20 @@ begin
   end;
   TRefresh();
   // Send room counts to clients
+  for i := 0 to ClientList.Count - 1 do
+  begin
+    client := TClientData(ClientList[i]);
+    if client.Connected then
+    begin
+      room := client.Room;
+      if room <> -1 then
+      begin
+        // count := RoomData[room].count;
+        count := 0; // placeholder
+        client.Socket.SendText(IntToStr(room) + '#' + IntToStr(count) + '#%');
+      end;
+    end;
+  end;
 end;
 
 procedure TForm3.ServerSocket1ClientRead(Sender: TObject;
@@ -684,6 +726,11 @@ begin
   PlayerList := TList.Create;
   ClientList := TList.Create;
   BanList := TList.Create;
+  HPOffSent := False;
+  NumAreas := 0;
+  NumItems := 0;
+  NumMusic := 0;
+  NumChars := 0;
   Loader();
 end;
 
