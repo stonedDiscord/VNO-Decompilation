@@ -212,8 +212,21 @@ begin
 end;
 
 procedure TForm3.TimerPerRoomTimer(Sender: TObject);
+var
+  i: Integer;
+  client: TClientData;
 begin
-  // Handle per-room timers, e.g., check for inactive clients or update room states
+  // Check for inactive clients in each room
+  for i := 0 to ClientList.Count - 1 do
+  begin
+    client := TClientData(ClientList[i]);
+    if client.Connected and (client.Room <> -1) then
+    begin
+      // Check if client is inactive for too long
+      // For now, just log the room activity
+      Memo2.Lines.Add('Room ' + IntToStr(client.Room) + ' activity check for client ' + IntToStr(client.ID));
+    end;
+  end;
 end;
 
 procedure TForm3.TRefresh();
@@ -356,22 +369,28 @@ end;
 
 procedure TForm3.Panel2Click(Sender: TObject);
 begin
-  // Handle panel click, possibly unused
+  // Handle panel click - could be used for testing or debug info
+  Memo2.Lines.Add('Panel clicked - Server status: ' + ConnectionStatus);
+  Memo2.Lines.Add('Connected clients: ' + IntToStr(ClientList.Count));
 end;
 
 procedure TForm3.Loader();
 var
   ini: TIniFile;
   i, count: Integer;
+  section: string;
 begin
   // Load chars
   ini := TIniFile.Create('./base/scene/init.ini');
   try
     count := ini.ReadInteger('chars', 'number', 0);
-    // Create CharData objects
+    NumChars := count;
     for i := 1 to count do
     begin
-      // Load char i
+      section := 'char' + IntToStr(i);
+      // Load char properties from ini
+      // For now, just log
+      Memo2.Lines.Add('Loaded char ' + IntToStr(i));
     end;
   finally
     ini.Free;
@@ -381,7 +400,13 @@ begin
   ini := TIniFile.Create('./base/scene/areas.ini');
   try
     count := ini.ReadInteger('Areas', 'number', 0);
-    // Create RoomData objects
+    NumAreas := count;
+    for i := 1 to count do
+    begin
+      section := 'Area' + IntToStr(i);
+      // Load area properties from ini
+      Memo3.Lines.Add('Area ' + IntToStr(i) + ': ' + ini.ReadString(section, 'name', 'Unknown'));
+    end;
   finally
     ini.Free;
   end;
@@ -390,7 +415,13 @@ begin
   ini := TIniFile.Create('./base/scene/items.ini');
   try
     count := ini.ReadInteger('items', 'number', 0);
-    // Create ItemData objects
+    NumItems := count;
+    for i := 1 to count do
+    begin
+      section := 'item' + IntToStr(i);
+      // Load item properties from ini
+      Memo3.Lines.Add('Item ' + IntToStr(i) + ': ' + ini.ReadString(section, 'name', 'Unknown'));
+    end;
   finally
     ini.Free;
   end;
@@ -399,7 +430,13 @@ begin
   ini := TIniFile.Create('./base/scene/musiclist.ini');
   try
     count := ini.ReadInteger('Name', 'number', 0);
-    // Create MusicData objects
+    NumMusic := count;
+    for i := 1 to count do
+    begin
+      section := 'music' + IntToStr(i);
+      // Load music properties from ini
+      Memo4.Lines.Add('Music ' + IntToStr(i) + ': ' + ini.ReadString(section, 'name', 'Unknown'));
+    end;
   finally
     ini.Free;
   end;
@@ -409,6 +446,9 @@ procedure TForm3.CheckInternetCode2(s: string; Socket: TCustomWinSocket);
 var
   parts: TArray<string>;
   command: string;
+  i: Integer;
+  client: TClientData;
+  ipToBan: string;
 begin
   parts := s.Split(['#']);
   if Length(parts) > 0 then
@@ -419,7 +459,19 @@ begin
   if command = 'CT' then
   begin
     // Handle player update
-    // Update player name, refresh list
+    if Length(parts) > 1 then
+    begin
+      // Update player name in list
+      for i := 0 to ClientList.Count - 1 do
+      begin
+        client := TClientData(ClientList[i]);
+        if client.Name = parts[1] then
+        begin
+          client.Name := parts[2];
+          Break;
+        end;
+      end;
+    end;
     TRefresh();
   end
   else if command = 'VER' then
@@ -437,11 +489,13 @@ begin
     // Connection success
     StatusBar1.Panels[0].Text := 'AS Connection: ONLINE';
     ConnectionStatus := 'SERVER';
+    Memo2.Lines.Add('Connected to master server');
   end
   else if command = 'CT4' then
   begin
     // Refused
     Memo2.Lines.Add('Refused access to masterserver.');
+    StatusBar1.Panels[0].Text := 'AS Connection: REFUSED';
   end
   else if command = 'CT5' then
   begin
@@ -453,7 +507,21 @@ begin
   else if command = 'CT6' then
   begin
     // Ban IP
-    // Close connections from IP
+    if Length(parts) > 1 then
+    begin
+      ipToBan := parts[1];
+      BanList.Add(ipToBan);
+      // Close connections from this IP
+      for i := 0 to ClientList.Count - 1 do
+      begin
+        client := TClientData(ClientList[i]);
+        if client.IP = ipToBan then
+        begin
+          client.Socket.Close;
+          Memo2.Lines.Add('Closed connection from banned IP: ' + ipToBan);
+        end;
+      end;
+    end;
   end;
 end;
 
@@ -462,6 +530,8 @@ var
   parts: TArray<string>;
   command: string;
   client: TClientData;
+  i: Integer;
+  otherClient: TClientData;
 begin
   parts := s.Split(['#']);
   if Length(parts) > 0 then
@@ -477,50 +547,100 @@ begin
     // In-character message
     Memo2.Lines.Add(client.Name + ': ' + parts[1]);
     // Broadcast to room
+    for i := 0 to ClientList.Count - 1 do
+    begin
+      otherClient := TClientData(ClientList[i]);
+      if (otherClient.Room = client.Room) and (otherClient.ID <> client.ID) then
+      begin
+        otherClient.Socket.SendText('MS#' + client.Name + '#' + parts[1] + '#%');
+      end;
+    end;
   end
   else if command = 'OOC' then
   begin
     // Out-of-character message
     Memo_ooc.Lines.Add(client.Name + ': ' + parts[1]);
+    // Broadcast OOC to all clients
+    for i := 0 to ClientList.Count - 1 do
+    begin
+      otherClient := TClientData(ClientList[i]);
+      if otherClient.ID <> client.ID then
+      begin
+        otherClient.Socket.SendText('OOC#' + client.Name + '#' + parts[1] + '#%');
+      end;
+    end;
   end
   else if command = 'CH' then
   begin
     // Change character
     if Length(parts) > 1 then
+    begin
       client.Character := parts[1];
+      Memo2.Lines.Add(client.Name + ' changed character to ' + client.Character);
+    end;
   end
   else if command = 'HI' then
   begin
     // Handshake
     Socket.SendText('HI#' + IntToStr(client.ID) + '#%');
+    Memo2.Lines.Add('Handshake completed with client ' + IntToStr(client.ID));
   end
-  // Add more commands as needed
+  else if command = 'RC' then
+  begin
+    // Room change
+    if Length(parts) > 1 then
+    begin
+      client.Room := StrToInt(parts[1]);
+      Memo2.Lines.Add(client.Name + ' changed to room ' + parts[1]);
+    end;
+  end
+  else if command = 'RC2' then
+  begin
+    // Request room count
+    // Send room count to client
+    Socket.SendText('RC2#' + IntToStr(client.Room) + '#0#%'); // 0 is placeholder for count
+  end;
 end;
 
 procedure TForm3.Button10Click(Sender: TObject);
 begin
   TRefresh();
-  Memo4.Lines.LoadFromFile('musiclist.txt');
+  if FileExists('musiclist.txt') then
+    Memo4.Lines.LoadFromFile('musiclist.txt')
+  else
+    Memo4.Lines.Add('musiclist.txt not found');
   Memo4.BringToFront;
-  Button10.Caption := 'OTHER';
+  Button10.Caption := 'MUSIC';
 end;
 
 procedure TForm3.Button11Click(Sender: TObject);
 begin
   Memo3.BringToFront;
   Button11.Caption := 'AREAS';
+  // Reload areas info
+  if FileExists('areas.txt') then
+    Memo3.Lines.LoadFromFile('areas.txt')
+  else
+    Memo3.Lines.Add('areas.txt not found');
 end;
 
 procedure TForm3.Button12Click(Sender: TObject);
 begin
   Memo1.BringToFront;
   Button12.Caption := 'HOST';
+  TRefresh();
 end;
 
 procedure TForm3.Button13Click(Sender: TObject);
 begin
   Memo3.BringToFront;
   Button13.Caption := 'ITEMS';
+  // Clear and show items
+  Memo3.Clear;
+  if FileExists('items.txt') then
+    Memo3.Lines.LoadFromFile('items.txt')
+  else
+    Memo3.Lines.Add('items.txt not found');
 end;
 
 procedure TForm3.Button14Click(Sender: TObject);
@@ -688,14 +808,24 @@ begin
 end;
 
 procedure TForm3.edit_oocKeyPress(Sender: TObject; var Key: Char);
+var
+  i: Integer;
+  client: TClientData;
 begin
   if Key = #13 then
   begin
     // Send OOC message
     if edit_ooc.Text <> '' then
     begin
-      // Send to all clients or something
-      // For now, just add to memo
+      // Broadcast to all clients
+      for i := 0 to ClientList.Count - 1 do
+      begin
+        client := TClientData(ClientList[i]);
+        if client.Connected then
+        begin
+          client.Socket.SendText('OOC#Server#' + edit_ooc.Text + '#%');
+        end;
+      end;
       Memo_ooc.Lines.Add('Server: ' + edit_ooc.Text);
       edit_ooc.Text := '';
     end;
