@@ -206,7 +206,7 @@ end;
 
 procedure TForm3.TimerPerRoomTimer(Sender: TObject);
 begin
-;
+  // Handle per-room timers, e.g., check for inactive clients or update room states
 end;
 
 procedure TForm3.TRefresh();
@@ -314,7 +314,7 @@ end;
 
 procedure TForm3.Panel2Click(Sender: TObject);
 begin
-;
+  // Handle panel click, possibly unused
 end;
 
 procedure TForm3.Loader();
@@ -668,6 +668,10 @@ begin
   Memo1.Lines.SaveToFile('host.txt');
   Memo3.Lines.SaveToFile('areas.txt');
   Memo4.Lines.SaveToFile('musiclist.txt');
+  // Free lists
+  PlayerList.Free;
+  ClientList.Free;
+  BanList.Free;
 end;
 
 procedure TForm3.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
@@ -677,6 +681,9 @@ end;
 
 procedure TForm3.FormCreate(Sender: TObject);
 begin
+  PlayerList := TList.Create;
+  ClientList := TList.Create;
+  BanList := TList.Create;
   Loader();
 end;
 
