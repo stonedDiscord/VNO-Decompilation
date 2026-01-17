@@ -123,6 +123,7 @@ type
     { Private-Deklarationen }
     function IsBanned(ip: string): Boolean;
     function GetFreeSlot: Integer;
+    function FindClientBySocket(Socket: TCustomWinSocket): TClientData;
   public
     { Public-Deklarationen }
   end;
@@ -178,6 +179,19 @@ begin
     end;
   end;
   Result := -1;
+end;
+
+function TForm3.FindClientBySocket(Socket: TCustomWinSocket): TClientData;
+var
+  i: Integer;
+begin
+  for i := 0 to ClientList.Count - 1 do
+    if TClientData(ClientList[i]).Socket = Socket then
+    begin
+      Result := TClientData(ClientList[i]);
+      Exit;
+    end;
+  Result := nil;
 end;
 
 implementation
@@ -402,9 +416,43 @@ begin
 end;
 
 procedure TForm3.CheckInternetCode(s: string; Socket: TCustomWinSocket);
+var
+  parts: TArray<string>;
+  command: string;
+  client: TClientData;
 begin
-  // Handle server client messages
-  // Parse commands like player actions, chat, etc.
+  parts := s.Split(['#']);
+  if Length(parts) > 0 then
+    command := parts[0]
+  else
+    Exit;
+
+  client := FindClientBySocket(Socket);
+  if client = nil then Exit;
+
+  if command = 'MS' then
+  begin
+    // In-character message
+    Memo2.Lines.Add(client.Name + ': ' + parts[1]);
+    // Broadcast to room
+  end
+  else if command = 'OOC' then
+  begin
+    // Out-of-character message
+    Memo_ooc.Lines.Add(client.Name + ': ' + parts[1]);
+  end
+  else if command = 'CH' then
+  begin
+    // Change character
+    if Length(parts) > 1 then
+      client.Character := parts[1];
+  end
+  else if command = 'HI' then
+  begin
+    // Handshake
+    Socket.SendText('HI#' + IntToStr(client.ID) + '#%');
+  end
+  // Add more commands as needed
 end;
 
 procedure TForm3.Button10Click(Sender: TObject);
@@ -604,7 +652,9 @@ begin
     // Send OOC message
     if edit_ooc.Text <> '' then
     begin
-      // Perhaps send 'OOC#' + edit_ooc.Text + '#%'
+      // Send to all clients or something
+      // For now, just add to memo
+      Memo_ooc.Lines.Add('Server: ' + edit_ooc.Text);
       edit_ooc.Text := '';
     end;
     Key := #0;
@@ -613,7 +663,11 @@ end;
 
 procedure TForm3.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
-;
+  // Cleanup
+  // Save memos to files
+  Memo1.Lines.SaveToFile('host.txt');
+  Memo3.Lines.SaveToFile('areas.txt');
+  Memo4.Lines.SaveToFile('musiclist.txt');
 end;
 
 procedure TForm3.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
