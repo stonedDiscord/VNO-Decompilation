@@ -675,7 +675,7 @@ var
   username: string;
 begin
   username := InputBox('Banning a Player', 'Enter the username to ban:', '');
-  ClientSocket1.Socket.SendText('CT#$ADMIN#' + character + ' was banned(user).#%');
+  ClientSocket1.Socket.SendText('CT#$ADMIN#' + username + ' was banned(user).#%');
 end;
 
 procedure TForm3.Button3Click(Sender: TObject);
