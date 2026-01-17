@@ -199,21 +199,8 @@ begin
 end;
 
 procedure TForm3.TimerPerRoomTimer(Sender: TObject);
-var
-  i: Integer;
-  client: TClientData;
 begin
-  // Check for inactive clients in each room
-  for i := 0 to ClientList.Count - 1 do
-  begin
-    client := TClientData(ClientList[i]);
-    if client.Connected and (client.Room <> -1) then
-    begin
-      // Check if client is inactive for too long
-      // For now, just log the room activity
-      Memo2.Lines.Add('Room ' + IntToStr(client.Room) + ' activity check for client ' + IntToStr(client.ID));
-    end;
-  end;
+  ;
 end;
 
 procedure TForm3.TRefresh();
@@ -221,14 +208,14 @@ var
   i: Integer;
   player: ^TPlayer;
 begin
-  Memo1.Lines.Clear;
+  ListBox_user.Clear;
   for i := 0 to PlayerList.Count - 1 do
   begin
     player := PlayerList[i];
-    Memo1.Lines.Add(IntToStr(player^.ID) + ' ' + player^.Name + ' ' + player^.IP + ' ' + player^.Character + ' ' + player^.Status);
+    Memo1.Lines.Add(IntToStr(player^.ID) + ':' + player^.Name + ': ' + player^.IP + ' ' + player^.Character + ' ' + player^.Status);
   end;
-  if ConnectionStatus <> 'ac ' then
-    StatusBar1.Panels[0].Text := 'ac<';
+  if ConnectionStatus <> 'SERVER' then
+    StatusBar1.Panels[0].Text := 'Server[!]';
 end;
 
 function TForm3.MD5(S: String): string;
