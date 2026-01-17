@@ -206,12 +206,16 @@ end;
 
 procedure TForm3.Button14Click(Sender: TObject);
 begin
-  InputBox('Banning a Player', 'Enter the username to ban:', '');
+  var username := InputBox('Banning a Player', 'Enter the username to ban:', '');
+  if username <> '' then
+    ClientSocket1.Socket.SendText('BU#' + username + '#%');
 end;
 
 procedure TForm3.Button15Click(Sender: TObject);
 begin
-  InputBox('Banning a Player', 'Enter the IP to ban:', '');
+  var ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
+  if ip <> '' then
+    ClientSocket1.Socket.SendText('BI#' + ip + '#%');
 end;
 
 procedure TForm3.Button16Click(Sender: TObject);
@@ -241,7 +245,9 @@ end;
 
 procedure TForm3.Button1Click(Sender: TObject);
 begin
-     InputBox('Banning a Player', 'Enter the IP to ban:', '');
+  var ip := InputBox('Banning a Player', 'Enter the IP to ban:', '');
+  if ip <> '' then
+    ClientSocket1.Socket.SendText('BI#' + ip + '#%');
 end;
 
 procedure TForm3.Button20Click(Sender: TObject);
@@ -269,22 +275,30 @@ end;
 
 procedure TForm3.Button2Click(Sender: TObject);
 begin
-     InputBox('Banning a Player', 'Enter the username to ban:', '');
+  var username := InputBox('Banning a Player', 'Enter the username to ban:', '');
+  if username <> '' then
+    ClientSocket1.Socket.SendText('BU#' + username + '#%');
 end;
 
 procedure TForm3.Button3Click(Sender: TObject);
 begin
-     InputBox('Muting a Player', 'Enter the character to mute:', '');
+  var character := InputBox('Muting a Player', 'Enter the character to mute:', '');
+  if character <> '' then
+    ClientSocket1.Socket.SendText('MU#' + character + '#%');
 end;
 
 procedure TForm3.Button4Click(Sender: TObject);
 begin
-     InputBox('Unmuting a Player', 'Enter the character to unmute:', '');
+  var character := InputBox('Unmuting a Player', 'Enter the character to unmute:', '');
+  if character <> '' then
+    ClientSocket1.Socket.SendText('UM#' + character + '#%');
 end;
 
 procedure TForm3.Button5Click(Sender: TObject);
 begin
-     InputBox('Disconnecting a Player', 'Enter the ID to disconnect:', '');
+  var id := InputBox('Disconnecting a Player', 'Enter the ID to disconnect:', '');
+  if id <> '' then
+    ClientSocket1.Socket.SendText('DI#' + id + '#%');
 end;
 
 procedure TForm3.Button6Click(Sender: TObject);
@@ -295,7 +309,9 @@ end;
 
 procedure TForm3.Button7Click(Sender: TObject);
 begin
-     InputBox('Kicking a Player', 'Enter the character to kick:', '');
+  var character := InputBox('Kicking a Player', 'Enter the character to kick:', '');
+  if character <> '' then
+    ClientSocket1.Socket.SendText('KI#' + character + '#%');
 end;
 
 procedure TForm3.Button8Click(Sender: TObject);
