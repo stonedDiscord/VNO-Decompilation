@@ -16,6 +16,18 @@ type
     Status: string;
   end;
 
+  TClientData = class
+    Name: string;
+    Status: string;
+    ID: Integer;
+    Room: Integer;
+    Character: string;
+    IP: string;
+    Connected: Boolean;
+    Socket: TCustomWinSocket;
+    constructor Create;
+  end;
+
   TForm3 = class(TForm)
     edit_ooc: TEdit;
     Memo2: TMemo;
@@ -109,6 +121,8 @@ type
       ErrorEvent: TErrorEvent; var ErrorCode: Integer);
   private
     { Private-Deklarationen }
+    function IsBanned(ip: string): Boolean;
+    function GetFreeSlot: Integer;
   public
     { Public-Deklarationen }
   end;
@@ -117,6 +131,54 @@ var
   Form3: TForm3;
   PlayerList: TList;
   ConnectionStatus: string;
+  BanList: TList;
+  ClientList: TList;
+
+constructor TClientData.Create;
+begin
+  inherited;
+  Name := '$UNOWN';
+  Status := '$NONE';
+  Room := -1;
+  Character := '$UNOWN';
+  Connected := True;
+end;
+
+function TForm3.IsBanned(ip: string): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  for i := 0 to BanList.Count - 1 do
+    if BanList[i] = ip then
+    begin
+      Result := True;
+      Exit;
+    end;
+end;
+
+function TForm3.GetFreeSlot: Integer;
+var
+  i, j: Integer;
+  used: Boolean;
+begin
+  for i := 1 to 100 do
+  begin
+    used := False;
+    for j := 0 to ClientList.Count - 1 do
+      if TClientData(ClientList[j]).ID = i then
+      begin
+        used := True;
+        Break;
+      end;
+    if not used then
+    begin
+      Result := i;
+      Exit;
+    end;
+  end;
+  Result := -1;
+end;
 
 implementation
 
@@ -163,14 +225,68 @@ end;
 
 procedure TForm3.ServerSocket1ClientConnect(Sender: TObject;
   Socket: TCustomWinSocket);
+var
+  ip: string;
+  client: TClientData;
 begin
-    ;
+  ip := Socket.RemoteAddress;
+  if IsBanned(ip) then
+  begin
+    Socket.Close;
+    Exit;
+  end;
+
+  // Send HPOFF if needed
+  // Assume some condition
+
+  // Send counts message
+  // Assume send to socket
+
+  // Create client
+  client := TClientData.Create;
+  client.IP := ip;
+  client.ID := GetFreeSlot;
+  client.Socket := Socket;
+  ClientList.Add(client);
+
+  // Log
+  Memo1.Lines.Add('[CONNEC.] ' + IntToStr(client.ID) + ' ' + ip);
+
+  // Send to master server
+  // Assume send message
+
+  // Refresh
+  TRefresh();
 end;
 
 procedure TForm3.ServerSocket1ClientDisconnect(Sender: TObject;
   Socket: TCustomWinSocket);
+var
+  i: Integer;
+  client: TClientData;
 begin
-;
+  for i := 0 to ClientList.Count - 1 do
+  begin
+    client := TClientData(ClientList[i]);
+    if client.Socket = Socket then
+    begin
+      // Free memory stream if any
+      // Set char taken to 0 if not $UNOWN
+      if client.Name <> '$UNOWN' then
+      begin
+        // Set taken to 0
+      end;
+      // Decrement room count if in room
+      // Log disconnect
+      Memo1.Lines.Add('[DISCONN.] ' + IntToStr(client.ID) + ' ' + client.IP);
+      // Remove from list
+      ClientList.Delete(i);
+      client.Free;
+      Break;
+    end;
+  end;
+  TRefresh();
+  // Send room counts to clients
 end;
 
 procedure TForm3.ServerSocket1ClientRead(Sender: TObject;
