@@ -328,7 +328,7 @@ end;
 
 procedure TForm3.button_reloadClick(Sender: TObject);
 begin
-;
+  TRefresh();
 end;
 
 procedure TForm3.ClientSocket1Connect(Sender: TObject;
@@ -347,7 +347,8 @@ end;
 procedure TForm3.ClientSocket1Error(Sender: TObject; Socket: TCustomWinSocket;
   ErrorEvent: TErrorEvent; var ErrorCode: Integer);
 begin
-            ;
+  StatusBar1.Panels[0].Text := 'AS Connection: ERROR';
+  ErrorCode := 0;
 end;
 
 procedure TForm3.ClientSocket1Read(Sender: TObject; Socket: TCustomWinSocket);
@@ -357,7 +358,16 @@ end;
 
 procedure TForm3.edit_oocKeyPress(Sender: TObject; var Key: Char);
 begin
-;
+  if Key = #13 then
+  begin
+    // Send OOC message
+    if edit_ooc.Text <> '' then
+    begin
+      // Perhaps send 'OOC#' + edit_ooc.Text + '#%'
+      edit_ooc.Text := '';
+    end;
+    Key := #0;
+  end;
 end;
 
 procedure TForm3.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -367,12 +377,12 @@ end;
 
 procedure TForm3.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
-      MessageDlg('Are you sure ?', mtConfirmation, [mbYes, mbNo], 0);
+  CanClose := MessageDlg('Are you sure ?', mtConfirmation, [mbYes, mbNo], 0) = mrYes;
 end;
 
 procedure TForm3.FormCreate(Sender: TObject);
 begin
-      ;
+  Loader();
 end;
 
 end.
